@@ -3,7 +3,8 @@ import qs from "qs";
 
 
 const serverConfig = {
-  baseURL: 'http://127.0.0.1:3000'
+  // baseURL: 'http://127.0.0.1:3000',
+  baseURL: 'http://node.vipgz1.91tunnel.com/',
 }
 
 // 创建 axios 请求实例
@@ -46,6 +47,10 @@ serviceAxios.interceptors.response.use(
     let data = res.data;
     // 处理自己的业务逻辑，比如判断 token 是否过期等等
     // 代码块
+    // console.log('res', res);
+    if (res.data.code == 502 || res.data.code == -460) {
+      throw new Error(res.data.message)
+    }
     return data;
   },
   (error) => {
@@ -56,7 +61,7 @@ serviceAxios.interceptors.response.use(
           message = "接口重定向了！";
           break;
         case 400:
-          message = "参数不正确！";
+          message = "网络太拥挤，请稍候再试！";
           break;
         case 401:
           message = "您未登录，或者登录已经超时，请先登录！";
@@ -96,7 +101,7 @@ serviceAxios.interceptors.response.use(
           break;
       }
     }
-    return Promise.reject(message);
+    throw new Error(message);
   }
 );
 export default serviceAxios;

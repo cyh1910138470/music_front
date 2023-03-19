@@ -40,6 +40,11 @@ const routes = [
         name: 'album',
         component: () => import('@/views/Home/Album')
       },
+      {
+        path: 'search',
+        name: 'album',
+        component: () => import('@/views/Search')
+      },
       
     ]
   },

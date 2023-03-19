@@ -12,16 +12,16 @@
       </div>
       <div class="user">
         <div class="user-search">
-          <img class="search-icon" src="@/assets/image/NavBar/search.png" alt="">
-          <input class="search-input" placeholder="音乐/视频/电台/用户" type="text">
+          <img class="search-icon" @click="toSearch" src="@/assets/image/NavBar/search.png" alt="">
+          <input class="search-input" @keydown.enter="toSearch" placeholder="音乐/视频/电台/用户" type="text">
         </div>
         <div class="creater-center">创作者中心</div>
         <div class="user-content">
-          <template v-if="false">
+          <template v-if="isShowAvatar">
             <el-dropdown @command="handleCommand">
               <span class="el-dropdown-link">
                 <img @mouseenter="openMenus" @mouseleave="closeMenus" class="user-icon"
-                  src="https://p4.music.126.net/K_B0VM3lX9GfbsERtGCtqg==/109951163780250740.jpg?param=30y30" alt="">
+                  :src="getStorage('userInfo').profile.avatarUrl" alt="">
                 <div class="user-news">{{ '87' }}</div>
               </span>
               <template #dropdown>
@@ -34,8 +34,8 @@
                   <el-dropdown-item command="c" divided><img src="@/assets/image/NavBar/config.png"
                       alt="">个人设置</el-dropdown-item>
                   <el-dropdown-item command="c"><img src="@/assets/image/NavBar/realname.png" alt="">实名认证</el-dropdown-item>
-                  <el-dropdown-item command="e" divided><img src="@/assets/image/NavBar/logout.png"
-                      alt="">退出</el-dropdown-item>
+                  <el-dropdown-item @click="logout" command="e" divided><img src="@/assets/image/NavBar/logout.png"
+                      alt="" >退出</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -58,20 +58,18 @@
       </div>
     </div>
 
-    <el-dialog v-model="isShow" title="登录">
+    <el-dialog v-model="isShow" width="20%" top="30vh" title="邮箱登录">
       <el-form v-model="formData">
         <el-form-item label="账号">
-          <el-input v-model="formData.tellphone"></el-input>
+          <el-input v-model="formData.email"></el-input>
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="formData.verifyCode"></el-input>
+          <el-input show-password type="password" v-model="formData.password"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
       <span class="dialog-footer">
-        <el-button @click="getverifyCode">获取验证码</el-button>
-        <el-button @click="handleLogin">登录</el-button>
-        <el-button @click="hanldleEmail">邮箱登录</el-button>
+        <el-button :loading="isLoading" @click="hanldleEmail">登录</el-button>
       </span>
     </template>
   </el-dialog>
@@ -81,6 +79,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { loginByPhone,getCode, loginByEmail } from '@/api/login'
+import { ElMessage } from 'element-plus'
+import { getStorage, setStorage } from '@/utils/storage'
 // import Login from '../Login';
 const router = useRouter();
 const menus = [
@@ -152,9 +152,11 @@ const enums = {
 const activeTab = ref('发现音乐')
 const activeTab2 = ref('推荐')
 const isShow = ref(false)
+const isLoading = ref(false);
+const isShowAvatar = ref(getStorage('userInfo')?.profile?.avatarUrl?true:false)
 const formData = ref({
-  tellphone: '',
-  verifyCode: ''
+  email: '',
+  password: ''
 });
 const changeMenus = (item) => {
   if (item.title === "商城" || item.title === "音乐人") {
@@ -179,18 +181,34 @@ const changeMenus2 = (item) => {
     path: `/home/${item.url}`
   })
 }
-const handleLogin = async () => {
-  console.log('===>>>', formData.value);
-  const res = await loginByPhone(formData.value.tellphone, formData.value.verifyCode)
-  console.log('res',res);
-}
-const getverifyCode = async () => {
-  const res = await getCode(formData.value.tellphone)
-  console.log('code', res);
-}
 const hanldleEmail = async () => {
-  const res = await loginByEmail(formData.value.tellphone, formData.value.verifyCode)
-  console.log('email',res);
+  isLoading.value = true
+  try {
+    const res = await loginByEmail(formData.value.email, formData.value.password)
+    setStorage('userInfo', res)
+    isShowAvatar.value = true;
+    isShow.value = false
+    isLoading.value = false
+  } catch(err) {
+    isLoading.value = false
+    ElMessage({
+      type: 'error',
+      message: err
+    })
+  }
+}
+const logout = () => {
+  console.log('dengchu');
+  isShowAvatar.value = false
+  setStorage('userInfo', '')
+}
+const toSearch = (e) => {
+  router.push({
+    path: '/home/search',
+    query: {
+      name: e.target.value
+    }
+  })
 }
 onMounted(() => {
   const routerArray = window.location.hash.split('/');
@@ -213,7 +231,7 @@ const closeDialog = () => {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .content {
   width: 100%;
   height: 70px;
