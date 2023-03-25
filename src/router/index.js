@@ -45,7 +45,11 @@ const routes = [
         name: 'album',
         component: () => import('@/views/Search')
       },
-      
+      {
+        path: 'playdetail',
+        name: 'playdetail',
+        component: () => import('@/views/Home/PlayList/component/detail.vue')
+      }
     ]
   },
   {

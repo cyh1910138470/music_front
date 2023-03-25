@@ -41,6 +41,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useStore } from 'vuex'
+import timeFormat from '@/utils/timeFormat'
 const store = useStore()
 const id = ref(store.state.songInfo?.id || 28181103)
 console.log('id', id);
@@ -54,13 +55,8 @@ const currentStamp = ref(0)
 let width = ref('3%')
 const timeleft = ref('00:00')
 
-let all = 246378
-const timeall = ((all / 1000) / 60).toFixed(0).toString().length == 1 ? `0${((all / 1000) / 60).toFixed(0).toString()}` : ((all / 1000) / 60).toFixed(0).toString()
-const xx = ((all / 1000) % 60).toFixed(0).toString().length == 1 ? `0${((all / 1000) % 60).toFixed(0).toString()}` : ((all / 1000) % 60).toFixed(0).toString()
-const timeright = timeall+ ':' + xx
-console.log('timeright',timeright);
-console.log('xx', xx);
-console.log('timeall',timeall);
+let all = ref(246378)
+const timeright = ref(timeFormat(all.value))
 const changeState = () => {
   isPlay.value = !isPlay.value
 }
@@ -71,10 +67,7 @@ const timeupdate = (event) => {
   }
   console.log('event', event);
   let timeuse = event.timeStamp - currentStamp.value;
-  const temp = ((timeuse * 1000) / 246378000) * 100
-
-  const timeall = (Math.floor((timeuse / 1000) / 60)).toFixed(0).toString().length == 1 ? `0${Math.floor(((timeuse / 1000) / 60)).toFixed(0).toString()}` : Math.floor(((timeuse / 1000) / 60)).toFixed(0).toString()
-  const xx = ((timeuse / 1000) % 60).toFixed(0).toString().length == 1 ? `0${((timeuse / 1000) % 60).toFixed(0).toString()}` : ((timeuse / 1000) % 60).toFixed(0).toString()
+  const temp = ((timeuse * 1000) / (all.value*1000)) * 100
   if (temp>=99.5) {
     setTimeout(() => {
       isFirst.value = true
@@ -84,13 +77,11 @@ const timeupdate = (event) => {
     }, 1500)
     return
   }
-  timeleft.value = timeall+ ':' + xx
-
+  timeleft.value = timeFormat(timeuse)
   if (temp <= 3) {
     return
   }
   width.value = temp + '%'
-  console.log('temp', temp);
   
 }
 const play = () => {
@@ -109,8 +100,11 @@ watch(() => store.state.songInfo, (newValue) => {
   audio.value.pause();
   songName.value = newValue.name
   artist.value = newValue.artists[0].name
+  timeright.value = timeFormat(newValue.duration)
+  all.value = newValue.duration
   isFirst.value = true
   isPlay.value = false
+  
   setTimeout(() => {
     audio.value.play();
   })
@@ -126,7 +120,7 @@ watch(() => store.state.songInfo, (newValue) => {
   height: 60px;
   background: linear-gradient(#4B4B4B, #212121);
   width: 100%;
-  
+  z-index: 999999999999;
   .player {
     width: 1000px;
     height: 100%;
